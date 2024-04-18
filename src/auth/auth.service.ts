@@ -8,15 +8,27 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
-
+import * as bcrypt from 'bcryptjs';
 @Injectable()
 export class AuthService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const newUser = new this.userModel(createUserDto);
-      return await newUser.save();
+      const { password, ...userData } = createUserDto;
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const newUser = new this.userModel({
+        ...userData,
+        password: hashedPassword,
+      });
+      await newUser.save();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...user } = newUser.toJSON();
+
+      return user;
     } catch (error) {
       if (error.code === 11000) {
         throw new BadRequestException(
@@ -36,7 +48,8 @@ export class AuthService {
   }
 
   update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
+    console.log(updateAuthDto);
+    return `This action updates a #${id} auth `;
   }
 
   remove(id: number) {
