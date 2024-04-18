@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -9,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { LoginDto } from './dto/login.dto';
 @Injectable()
 export class AuthService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
@@ -37,6 +39,26 @@ export class AuthService {
       }
       throw new InternalServerErrorException('Something went wrong');
     }
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials - email');
+    }
+
+    if (!bcrypt.compare(password, user.password)) {
+      throw new UnauthorizedException('Invalid credentials - password');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...rest } = user.toJSON();
+
+    return {
+      user: rest,
+      token: 'token',
+    };
   }
 
   findAll() {
