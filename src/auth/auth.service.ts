@@ -83,6 +83,13 @@ export class AuthService {
     return `This action returns a #${id} auth`;
   }
 
+  async findUserById(id: string) {
+    const user = await this.userModel.findById(id);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...rest } = user.toJSON();
+    return rest;
+  }
+
   update(id: number, updateAuthDto: UpdateAuthDto) {
     console.log(updateAuthDto);
     return `This action updates a #${id} auth `;
