@@ -4,16 +4,23 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './interfaces/jwt-payload.interfaces';
+import { LoginResponse } from './interfaces/login-response.interface';
+import { RegisterUserDto, UpdateAuthDto, CreateUserDto } from './dto';
 @Injectable()
 export class AuthService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name)
+    private userModel: Model<User>,
+    private jwtService: JwtService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -27,7 +34,6 @@ export class AuthService {
         password: hashedPassword,
       });
       await newUser.save();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...user } = newUser.toJSON();
 
       return user;
@@ -41,7 +47,16 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async register(registerUserDto: RegisterUserDto): Promise<LoginResponse> {
+    const user = await this.create(registerUserDto);
+
+    return {
+      user,
+      token: this.getJWTToken({ id: user._id }),
+    };
+  }
+
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({ email });
     if (!user) {
@@ -52,17 +67,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials - password');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...rest } = user.toJSON();
 
     return {
       user: rest,
-      token: 'token',
+      token: this.getJWTToken({ id: user.id }),
     };
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  findAll(): Promise<User[]> {
+    return this.userModel.find();
   }
 
   findOne(id: number) {
@@ -76,5 +90,10 @@ export class AuthService {
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
+  }
+
+  getJWTToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 }
