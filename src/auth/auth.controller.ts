@@ -12,9 +12,9 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
-import { CreateUserDto, UpdateAuthDto, LoginDto, RegisterUserDto } from './dto';
+import { CreateUserDto, LoginDto, RegisterUserDto, UpdateAuthDto } from './dto';
 import { AuthGuard } from './guards/auth/auth.guard';
-import { LoginResponse } from '../../dist/auth/interfaces/login-response.interface';
+import { LoginResponse } from './interfaces/login-response.interface';
 import { User } from './entities/user.entity';
 
 @Controller('auth')
@@ -52,18 +52,18 @@ export class AuthController {
     };
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.authService.findOne(+id);
-  // }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.authService.findOne(+id);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-  //   return this.authService.update(+id, updateAuthDto);
-  // }
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+    return this.authService.update(+id, updateAuthDto);
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.authService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.authService.remove(+id);
+  }
 }
