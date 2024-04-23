@@ -42,6 +42,8 @@ export class AuthController {
     const user = req['user'];
     return user;
   }
+
+  @UseGuards(AuthGuard)
   @Get('check-token')
   checkToken(@Request() req: Request): LoginResponse {
     const user = req['user'] as User;
