@@ -59,11 +59,14 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<LoginResponse> {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({ email });
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials - email');
     }
 
-    if (!bcrypt.compare(password, user.password)) {
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials - password');
     }
 
